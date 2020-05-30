@@ -5,6 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
+import pandas as pd
+import numpy as np
 import time
 import string
 import re
@@ -14,39 +16,23 @@ import math
 # run 'choco upgrade chromedriver' in admin powershell
 
 
-def start(loc, dest, go, back):
+def scrape(loc, dest, go, back):
     driver = webdriver.Chrome()
-
+    datum = {}
     driver.get('https://www.kayak.com/flights/' + loc + '-' +
                dest + '/' + go + '/' + back + '?sort=bestflight_a')
     # time.sleep(100)
     driver.refresh()
+
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
 
     results_flights = soup.find_all(
-        'div', {'class': 'resultWrapper'})
-    # more10 = driver.find_element_by_id(
-    #     'UHxc-loadMore').click()
-    print('count = ' + str(len(results_flights)))
-    #print(results_flights[2].find('div', {'class': 'name'}).get_text())
-    #fd = open("scraped.txt", 'w')
-    # for res in results_flights:
-    #     # print(res.find(''))
-    #     print(res.find('div', {'class': 'section times'}
-    #                    ).get_text(), end=' ')
-    #     print(res.find('div', {'class': 'section stops'}
-    #                    ).get_text(), end=' ')
-    #     print(res.find(
-    #         'div', {'class': 'section duration allow-multi-modal-icons'}).get_text(), end=' ')
-    #     print(res.find('span', {'class': 'price-text'}
-    #                    ).get_text())
-    #     # print(res.find('span', {
-    #     #       'class': 'label'}).get_text())
-    #     print('-'*50)
-    #     # print(res.get_text())
+        'div', {'class': "inner-grid keel-grid"})
 
-    datum = {}
+    print(f'count = {len(results_flights)}')
+    #print('count = ' + str(len(results_flights)))
+
     for res in results_flights:
 
         times = res.find('div', {'class': 'section times'}
@@ -76,7 +62,10 @@ def start(loc, dest, go, back):
         datum['duration'] = datum.get(
             'duration', []) + [clean_string(duration)]
         datum['price'] = datum.get('price', []) + [clean_price(price)]
+    calculate(datum)
 
+
+def calculate(datum):
     sumTime = 0
     sumTimeOneStop = 0
     sumTimeTwoStop = 0
@@ -98,7 +87,7 @@ def start(loc, dest, go, back):
             sumNonstopPrice += datum['price'][p]
             time, space, travel = datum['duration'][p].rpartition(' ')
             hrAndMmin = list(map(int, re.findall(r'\d+', time)))
-            print(hrAndMmin)
+
             totalTime = (hrAndMmin[0] * 60) + hrAndMmin[1]
             totalTime = float(totalTime/60)
             sumTime += totalTime
@@ -126,44 +115,13 @@ def start(loc, dest, go, back):
     avgPriceOneStop = 0
     avgPriceTwoStop = 0
 
-    # for _ in range(len(datum['duration'])):
-    #     if datum['numStops'][_] == 'nonstop':
-
-    #         time, space, travel = datum['duration'][_].rpartition(' ')
-    #         hrAndMmin = list(map(int, re.findall(r'\d+', time)))
-    #         # print(hrAndMmin)
-    #         totalTime = (hrAndMmin[0] * 60) + hrAndMmin[1]
-    #         totalTime = float(totalTime/60)
-    #         sumTime += totalTime
-    #     if datum['numStops'][_] == '1':
-
-    #         time, space, travel = datum['duration'][_].rpartition(' ')
-    #         hrAndMmin = list(map(int, re.findall(r'\d+', time)))
-    #         totalTime = (hrAndMmin[0] * 60) + hrAndMmin[1]
-    #         totalTime = float(totalTime/60)
-    #         sumTimeOneStop += totalTime
-    #     if datum['numStops'][_] == '2':
-    #         time, space, travel = datum['duration'][_].rpartition(
-    #             ' ')  # 5h4m icn-ord
-    #         hrAndMmin = list(map(int, re.findall(r'\d+', time)))  # [5, 4]
-    #         print(hrAndMmin)
-
-    #         totalTime = (hrAndMmin[0] * 60) + hrAndMmin[1]
-    #         totalTime = float(totalTime/60)
-    #         sumTimeTwoStop += totalTime
-
-    # minutes = minutes * 60
-    # minutes1 = minutes1 * 60
-    # # print(minutes2)
-    # minutes2 = minutes2 * 60
-
     if countNonstop > 0:
         avgPriceNonstop = float(sumNonstopPrice / countNonstop)
         print('Average Price for nonstop: $' + str(avgPriceNonstop))
         avgDuration = str(sumTime/float(countNonstop))
 
         hour, dec, minutes = avgDuration.rpartition('.')
-        print(f'S{sumTime} A{avgDuration} H{hour} M{minutes}')
+
         minutes = math.ceil(float(str(f'{dec}{minutes}')) * 60)
         print('Average Flight Time: ' + str(hour) +
               ' hours ' + str(minutes) + ' minutes')
@@ -191,9 +149,6 @@ def start(loc, dest, go, back):
     else:
         print('No 2 stop flights available')
 
-    # print(datum['duration'])
-    # print(datum['numStops'])
-
 
 if __name__ == "__main__":
     print('Enter Current Location, Destination, Depart, and Return date(YYYY-MM-DD)')
@@ -201,7 +156,7 @@ if __name__ == "__main__":
     loc = loc.upper()
     dest = dest.upper()
     # print(loc)
-    start(loc, dest, go, back)
+    scrape(loc, dest, go, back)
 
 # WORKING WAIT UNTIL it shows/PRESENT!!!!!!!
     # download_button_path = "//html/body/div[1]/div[1]/main/div/div[2]/div[2]/div[1]/div[2]/div[1]/div[3]/div[1]/div/a"

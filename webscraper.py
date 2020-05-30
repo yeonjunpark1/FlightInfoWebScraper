@@ -13,20 +13,6 @@ import math
 # if chromedriver is outdated, chrome browser has updated, but chromedriver is only compatible with older version.
 # run 'choco upgrade chromedriver' in admin powershell
 
-import string
-
-
-class Flight:
-
-    def __init__(self, origin, destination, departDate, returnDate):
-        self.origin = origin.upper()
-        self.destination = destination.upper()
-        self.departDate = departDate
-        self.returnDate = returnDate
-
-    def __str__(self):
-        return f'Flight from {origin} to {destination} on {departDate} returning {returnDate}'
-
 
 def scrape(firstFlight):
     driver = webdriver.Chrome()
@@ -41,8 +27,8 @@ def scrape(firstFlight):
 
     results_flights = soup.find_all(
         'div', {'class': "inner-grid keel-grid"})
-
-    print(f'count = {len(results_flights)}')
+    count = len(results_flights)
+    print(count)
 
     for res in results_flights:
 
@@ -74,7 +60,7 @@ def scrape(firstFlight):
             'duration', []) + [clean_string(duration)]
         datum['price'] = datum.get('price', []) + [clean_price(price)]
     calculate(datum)
-    return 1
+    return count
 
 
 def calculate(datum):
@@ -162,16 +148,36 @@ def calculate(datum):
         print('No 2 stop flights available')
 
 
+class Flight:
+
+    def __init__(self, origin, destination, departDate, returnDate):
+        self.origin = origin.upper()
+        self.destination = destination.upper()
+        self.departDate = departDate
+        self.returnDate = returnDate
+
+    def __str__(self):
+        return f'Flight from {self.origin} to {self.destination} on {self.departDate} returning {self.returnDate}'
+
+
 if __name__ == "__main__":
-    print('Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+    flights = []
+    for i in range(2):
+        if i == 0:
+            print(
+                'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+        else:
+            print('Would you like to keep ')
+            print(
+                'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+        try:
+            loc, dest, go, back = map(str, input().split())
+        except ValueError:
+            print('Please Enter all Inputs')
+        flights.append(Flight(loc, dest, go, back))
 
-    loc, dest, go, back = map(str, input().split())
-    firstChoice = Flight(loc, dest, go, back)
+    for flight in flights:
 
-    print('Enter Second destination. Will assume same dates and origin as first')
-    loc2, dest2, go2, back2 = map(str, input().split())
-    secondChoice = Flight(loc2, dest2, go2, back2)
-    destinations = [firstChoice, secondChoice]
-    for destination in destinations:
-        scrape(destination)
-        print(f'Destination {destination.destination}')
+        if scrape(flight) < 10:
+            scrape(flight)
+        print(flight)

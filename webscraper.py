@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
-import time
+
 import string
 import re
 import math
@@ -13,13 +13,27 @@ import math
 # if chromedriver is outdated, chrome browser has updated, but chromedriver is only compatible with older version.
 # run 'choco upgrade chromedriver' in admin powershell
 
+import string
 
-def scrape(loc, dest, go, back):
+
+class Flight:
+
+    def __init__(self, origin, destination, departDate, returnDate):
+        self.origin = origin.upper()
+        self.destination = destination.upper()
+        self.departDate = departDate
+        self.returnDate = returnDate
+
+    def __str__(self):
+        return f'Flight from {origin} to {destination} on {departDate} returning {returnDate}'
+
+
+def scrape(firstFlight):
     driver = webdriver.Chrome()
     datum = {}
-    driver.get('https://www.kayak.com/flights/' + loc + '-' +
-               dest + '/' + go + '/' + back + '?sort=bestflight_a')
-    # time.sleep(100)
+    driver.get('https://www.kayak.com/flights/' + firstFlight.origin + '-' +
+               firstFlight.destination + '/' + firstFlight.departDate + '/' + firstFlight.returnDate + '?sort=bestflight_a')
+
     driver.refresh()
 
     html = driver.page_source
@@ -29,7 +43,6 @@ def scrape(loc, dest, go, back):
         'div', {'class': "inner-grid keel-grid"})
 
     print(f'count = {len(results_flights)}')
-    #print('count = ' + str(len(results_flights)))
 
     for res in results_flights:
 
@@ -61,6 +74,7 @@ def scrape(loc, dest, go, back):
             'duration', []) + [clean_string(duration)]
         datum['price'] = datum.get('price', []) + [clean_price(price)]
     calculate(datum)
+    return 1
 
 
 def calculate(datum):
@@ -150,8 +164,14 @@ def calculate(datum):
 
 if __name__ == "__main__":
     print('Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
-    loc, dest, go, back = map(str, input().split())
-    loc = loc.upper()
-    dest = dest.upper()
 
-    scrape(loc, dest, go, back)
+    loc, dest, go, back = map(str, input().split())
+    firstChoice = Flight(loc, dest, go, back)
+
+    print('Enter Second destination. Will assume same dates and origin as first')
+    loc2, dest2, go2, back2 = map(str, input().split())
+    secondChoice = Flight(loc2, dest2, go2, back2)
+    destinations = [firstChoice, secondChoice]
+    for destination in destinations:
+        scrape(destination)
+        print(f'Destination {destination.destination}')

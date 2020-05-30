@@ -1,9 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
+
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
@@ -151,43 +149,9 @@ def calculate(datum):
 
 
 if __name__ == "__main__":
-    print('Enter Current Location, Destination, Depart, and Return date(YYYY-MM-DD)')
+    print('Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
     loc, dest, go, back = map(str, input().split())
     loc = loc.upper()
     dest = dest.upper()
-    # print(loc)
+
     scrape(loc, dest, go, back)
-
-# WORKING WAIT UNTIL it shows/PRESENT!!!!!!!
-    # download_button_path = "//html/body/div[1]/div[1]/main/div/div[2]/div[2]/div[1]/div[2]/div[1]/div[3]/div[1]/div/a"
-    # wait = WebDriverWait(driver, 10).until(
-    #     EC.element_to_be_clickable((By.XPATH, download_button_path)))
-    # more_button = driver.find_element_by_xpath(
-    #     '//html/body/div[1]/div[1]/main/div/div[2]/div[2]/div[1]/div[2]/div[1]/div[3]/div[1]/div/a')
-
-    # for item in more_button:
-    #     ActionChains(d).move_to_element(item).click().perform()  # item.click()
-
-    # closePopup = driver.find_element_by_xpath(
-    #     '/html/body/div[45]/div[3]/div/button').click()
-
-    #closePopup = driver.find_element_by_id('c8QT1-dialog-close').click
-    # try:
-    #     closePopup = driver.find_element_by_xpath(
-    #         '/html/body/div[45]/div[3]/div/button/svg').click()
-    # except:
-    #     closePopup2 = driver.find_element_by_xpath(
-    #         '/html/body/div[45]/div[3]/div/button').click()
-
-    # try:
-    #     wait = WebDriverWait(driver, 5).until(
-    #         EC.element_to_be_clickable((By.XPATH, closePopup))).click()
-    # except:
-    #     wait = WebDriverWait(driver, 5).until(
-    #         EC.element_to_be_clickable((By.XPATH, closePopup2))).click()
-    # html = driver.find_element_by_tag_name('html')
-    # for i in range(6):
-    #     html.send_keys(Keys.PAGE_DOWN)
-    # more1 = driver.find_element_by_xpath(
-    #     '/html/body/div[1]/div[1]/main/div/div[2]/div[2]/div[1]/div[2]/div[1]/div[3]/div[1]/div/a').click()
-    # time.sleep(5)

@@ -14,11 +14,11 @@ import math
 # run 'choco upgrade chromedriver' in admin powershell
 
 
-def scrape(firstFlight):
+def scrape(flight):
     driver = webdriver.Chrome()
     datum = {}
-    driver.get('https://www.kayak.com/flights/' + firstFlight.origin + '-' +
-               firstFlight.destination + '/' + firstFlight.departDate + '/' + firstFlight.returnDate + '?sort=bestflight_a')
+    driver.get('https://www.kayak.com/flights/' + flight.origin + '-' +
+               flight.destination + '/' + flight.departDate + '/' + flight.returnDate + '?sort=bestflight_a')
 
     driver.refresh()
 
@@ -28,7 +28,7 @@ def scrape(firstFlight):
     results_flights = soup.find_all(
         'div', {'class': "inner-grid keel-grid"})
     count = len(results_flights)
-    print(count)
+    print(f'{count} flights to {flight.destination}')
 
     for res in results_flights:
 
@@ -166,18 +166,28 @@ if __name__ == "__main__":
         if i == 0:
             print(
                 'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+            try:
+                loc, dest, go, back = map(str, input().split())
+            except ValueError:
+                print('Please Enter all Inputs')
+            flights.append(Flight(loc, dest, go, back))
         else:
-            print('Would you like to keep ')
             print(
-                'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
-        try:
-            loc, dest, go, back = map(str, input().split())
-        except ValueError:
-            print('Please Enter all Inputs')
-        flights.append(Flight(loc, dest, go, back))
+                'Would you like to keep Origin, Depart Date and Return identical to first flight?(y or n)')
+            s = str(input())
+            if(s == 'y'):
+                print('Please input Destination for Flight 2')
+                flights.append(
+                    Flight(flights[0].origin, str(input()), flights[0].departDate, flights[0].returnDate))
+            else:
+                print(
+                    'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+
+            flights.append(Flight(loc, dest, go, back))
 
     for flight in flights:
 
         if scrape(flight) < 10:
             scrape(flight)
+
         print(flight)

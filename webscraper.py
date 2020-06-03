@@ -1,7 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
@@ -24,6 +23,54 @@ def scrape(flight):
 
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
+    global results
+    deptimes = soup.find_all('span', attrs={'class': 'depart-time base-time'})
+    arrtimes = soup.find_all('span', attrs={'class': 'arrival-time base-time'})
+    meridies = soup.find_all('span', attrs={'class': 'time-meridiem meridiem'})
+
+    deptime = []
+    for div in deptimes:
+        deptime.append(div.getText()[:-1])
+
+    arrtime = []
+    for div in arrtimes:
+        arrtime.append(div.getText()[:-1])
+
+    meridiem = []
+    for div in meridies:
+        meridiem.append(div.getText())
+
+    deptime = np.asarray(deptime)
+    deptime = deptime.reshape(int(len(deptime)/2), 2)
+
+    arrtime = np.asarray(arrtime)
+    arrtime = arrtime.reshape(int(len(arrtime)/2), 2)
+
+    meridiem = np.asarray(meridiem)
+    meridiem = meridiem.reshape(int(len(meridiem)/4), 4)
+
+    # Get the price
+    regex = re.compile(
+        'Common-Booking-MultiBookProvider (.*)multi-row Theme-featured-large(.*)')
+    price_list = soup.find_all('div', attrs={'class': regex})
+
+    price = []
+    for div in price_list:
+        price.append(int(div.getText().split('\n')[3][1:-1]))
+
+    df = pd.DataFrame({"origin": flight.origin,
+                       "destination": flight.destination,
+                       "startdate": flight.departDate,
+                       "enddate": flight.returnDate,
+                       "price": price,
+                       "currency": "USD",
+                       "deptime_o": [m+str(n) for m, n in zip(deptime[:, 0], meridiem[:, 0])],
+                       "arrtime_d": [m+str(n) for m, n in zip(arrtime[:, 0], meridiem[:, 1])],
+                       "deptime_d": [m+str(n) for m, n in zip(deptime[:, 1], meridiem[:, 2])],
+                       "arrtime_o": [m+str(n) for m, n in zip(arrtime[:, 1], meridiem[:, 3])]
+                       })
+
+    results = pd.concat([results, df], sort=False)
 
     results_flights = soup.find_all(
         'div', {'class': "inner-grid keel-grid"})
@@ -162,32 +209,35 @@ class Flight:
 
 if __name__ == "__main__":
     flights = []
-    for i in range(2):
-        if i == 0:
-            print(
-                'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
-            try:
-                loc, dest, go, back = map(str, input().split())
-            except ValueError:
-                print('Please Enter all Inputs')
-            flights.append(Flight(loc, dest, go, back))
-        else:
-            print(
-                'Would you like to keep Origin, Depart Date and Return identical to first flight?(y or n)')
-            s = str(input())
-            if(s == 'y'):
-                print('Please input Destination for Flight 2')
-                flights.append(
-                    Flight(flights[0].origin, str(input()), flights[0].departDate, flights[0].returnDate))
-            else:
-                print(
-                    'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
 
-            flights.append(Flight(loc, dest, go, back))
+    print(
+        'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+    try:
+        loc, dest, go, back = map(str, input().split())
+    except ValueError:
+        print('Please Enter all Inputs')
+    flights.append(Flight(loc, dest, go, back))
+
+    print(
+        'Would you like to keep Origin, Depart Date and Return identical to first flight?(y or n)')
+    s = str(input())
+    if(s == 'y'):
+        print('Please input Destination for Flight 2')
+        flights.append(
+            Flight(flights[0].origin, str(input()), flights[0].departDate, flights[0].returnDate))
+    else:
+        print(
+            'Enter Origin, Destination, Depart Date(YYYY-MM-DD), and Return date(YYYY-MM-DD)')
+
+    flights.append(Flight(loc, dest, go, back))
+
+    results = pd.DataFrame(columns=['origin', 'destination', 'startdate', 'enddate',
+                                    'deptime_o', 'arrtime_d', 'deptime_d', 'arrtime_o', 'currency', 'price'])
 
     for flight in flights:
 
-        if scrape(flight) < 10:
+        if scrape(flight) > 10:
+            print(results)
+            print(flight)
+        else:
             scrape(flight)
-
-        print(flight)
